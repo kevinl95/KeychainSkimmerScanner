@@ -1,4 +1,4 @@
-# M5Stack CoreInk Credit Card Skimmer Detecting Keychain
+# M5Stack ESP32 CoreInk Credit Card Skimmer Detecting Keychain
 
 ![A keychain with an e-ink display that says "Zero skimmers found" being dangled in front of a gas pump](images/device.JPG)
 
