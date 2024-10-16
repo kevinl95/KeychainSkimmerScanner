@@ -22,9 +22,6 @@ BluetoothSerial SerialBT;
 
 #define BT_DISCOVER_TIME 10000
 
-static bool btScanAsync = true;
-static bool btScanSync = true;
-
 void btAdvertisedDeviceFound(BTAdvertisedDevice *pDevice) {
   Serial.printf("Found a device asynchronously: %s\n", pDevice->toString().c_str());
 }
