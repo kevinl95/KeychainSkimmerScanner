@@ -33,7 +33,7 @@ char batteryStrBuff[64];
 // searches for the string sfind in the string str
 // returns 1 if string found
 // returns 0 if string not found
-char StrContains(char *str, char *sfind)
+char StrContains(const char *str, const char *sfind)
 {
     char found = 0;
     char index = 0;
