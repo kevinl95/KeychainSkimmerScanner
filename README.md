@@ -64,7 +64,7 @@ Step 9: Install the M5Core-Ink library
 
 From the top menu, click "Tools".
     Navigate to "Manage Libraries" and click it.
-    A pane will open on the left. Search for `m5core-ink'. Install version 1.0.0 by clicking the `Install' button.
+    A pane will open on the left. Search for "m5core-ink". Install version 1.0.0 by clicking the "Install" button.
 
 Step 10: Select the Installed Board
 
