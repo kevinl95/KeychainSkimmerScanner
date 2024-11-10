@@ -60,11 +60,17 @@ Step 8: Install the Package
 Once you've found the package click Install.
 The Arduino IDE will download and install the necessary libraries and tools automatically.
 
-Step 9: Select the Installed Board
+Step 9: Install the M5Core-Ink library
+
+From the top menu, click "Tools".
+    Navigate to "Manage Libraries" and click it.
+    A pane will open on the left. Search for `m5core-ink'. Install version 1.0.0 by clicking the `Install' button.
+
+Step 10: Select the Installed Board
 
 After installation, you can select the newly installed board by navigating to Tools > Board and choosing the M5CoreInk
 
 
-Now that we have our IDE set up, open main.io. Connect your M5CoreInk development kit using the included USB cable. Select the correct serial port from the Ports menu in the Arduino IDE under Tools > Port. If you are unsure what port to use, check the device manager for your operating system to see where the board connected. Click `Upload' in the upper left. The code will build and the code will automatically be uploaded to the development kit. When finished, your new keychain will emit a tone!
+Now that we have our IDE set up, open KeychainSkimmerScanner.ino. Connect your M5CoreInk development kit using the included USB cable. Select the correct serial port from the Ports menu in the Arduino IDE under Tools > Port. If you are unsure what port to use, check the device manager for your operating system to see where the board connected. Click `Upload' in the upper left. The code will build and the code will automatically be uploaded to the development kit. When finished, your new keychain will emit a tone!
 
 There is a wheel on the right side of the develoment kit. Move it up or down. Scanning will begin automatically. The device will report how many suspicious devices it detected, as well as how many Bluetooth devices it saw in total.
