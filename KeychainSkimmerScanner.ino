@@ -9,6 +9,7 @@
 */
 #include "M5CoreInk.h"
 #include "BluetoothSerial.h"
+#include "esp_adc_cal.h"
 
 #if !defined(CONFIG_BT_ENABLED) || !defined(CONFIG_BLUEDROID_ENABLED)
 #error Bluetooth is not enabled! Please run `make menuconfig` to enable it
@@ -27,7 +28,7 @@ void btAdvertisedDeviceFound(BTAdvertisedDevice *pDevice) {
 }
 
 Ink_Sprite InkPageSprite(&M5.M5Ink);
-
+char batteryStrBuff[64];
 
 // searches for the string sfind in the string str
 // returns 1 if string found
@@ -59,14 +60,32 @@ char StrContains(char *str, char *sfind)
     return 0;
 }
 
+float getBatVoltage() {
+    analogSetPinAttenuation(35, ADC_11db);
+    esp_adc_cal_characteristics_t *adc_chars =
+        (esp_adc_cal_characteristics_t *)calloc(
+            1, sizeof(esp_adc_cal_characteristics_t));
+    esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12,
+                             3600, adc_chars);
+    uint16_t ADCValue = analogRead(35);
+
+    uint32_t BatVolmV = esp_adc_cal_raw_to_voltage(ADCValue, adc_chars);
+    float BatVol      = float(BatVolmV) * 25.1 / 5.1 / 1000;
+    free(adc_chars);
+    return BatVol;
+}
 
 void Scan() {
-    InkPageSprite.clear();                  // clear the screen.
+    InkPageSprite.clear();                  // clear the sprite.
     InkPageSprite.drawString(10, 50, "Scanning, please wait...");  // draw the string.
     InkPageSprite.pushSprite();             // push the sprite.
     Serial.println("Starting synchronous discovery... ");
     int count = 0;
     int skimmerCount = 0;
+    int hc05 = 0;
+    int hc06 = 0;
+    int other = 0;
+
     BTScanResults *pResults = SerialBT.discover(BT_DISCOVER_TIME);
     if (pResults) {
       pResults->dump(&Serial);
@@ -78,23 +97,32 @@ void Scan() {
         if (dev) {
           if (StrContains(success, "HC-05") == 1) {
             skimmerCount += 1;
+            hc05 += 1;
           }
           else if (StrContains(success, "HC-06") == 1) {
             skimmerCount += 1;
+            hc06 += 1;
           }
           else if (StrContains(success, "Name: , ") == 1) {
             skimmerCount += 1;
+            other += 1;
           }
         }
       }
     } else {
       Serial.println("Error on BT Scan, no result!");
     }
-    InkPageSprite.clear();                  // clear the screen.
+    InkPageSprite.clear();
+
+    sprintf(batteryStrBuff, "Battery:%.2fV", getBatVoltage());
+    InkPageSprite.drawString(10, 20, batteryStrBuff,&AsciiFont8x16);
+
     String displayCount = "Devices found: " + String(count);
     String skimmerDisplayCount = "Skimmers found: " + String(skimmerCount);
+    String skimmerTypes = "  " + String(hc05) + "  " + String(hc06) + "  " + String(other);
     InkPageSprite.drawString(35, 50, displayCount.c_str());  // draw the string.
-    InkPageSprite.drawString(35, 100, skimmerDisplayCount.c_str());  // draw the string.
+    InkPageSprite.drawString(35, 75, skimmerDisplayCount.c_str());  // draw the string.
+    InkPageSprite.drawString(35, 100, skimmerTypes.c_str());  // draw the string.
     if (skimmerCount > 0) {
       InkPageSprite.drawString(0, 150, "Possible skimmers present!");  // draw the danger string.
     }
@@ -110,12 +138,9 @@ void Scan() {
 
 void Reset() {
   M5.M5Ink.clear();  // clear the screen.
-  // Need a long empty string or else we get characters from the previous draw on the screen
-  InkPageSprite.drawString(35, 50, "                                                               ");  // draw string.
-  InkPageSprite.drawString(35, 100, "                                                               ");  // draw string.
-  InkPageSprite.drawString(0, 150, "                                                               ");  // draw string.
-  InkPageSprite.pushSprite();  // push the sprite.
-  M5.M5Ink.clear();  // clear the screen.
+  InkPageSprite.clear();  // clear the sprite.
+  sprintf(batteryStrBuff, "Battery:%.2fV", getBatVoltage());
+  InkPageSprite.drawString(10, 20, batteryStrBuff,&AsciiFont8x16);
   InkPageSprite.drawString(35, 50, "Ready to scan");  // draw string.
   InkPageSprite.pushSprite();  // push the sprite.
 }
@@ -130,6 +155,8 @@ void setup() {
     delay(1000);
     if (InkPageSprite.creatSprite(0, 0, 200, 200, true) != 0) {
     }
+    sprintf(batteryStrBuff, "Battery:%.2fV", getBatVoltage());
+    InkPageSprite.drawString(10, 20, batteryStrBuff,&AsciiFont8x16);
     InkPageSprite.drawString(35, 50, "Ready to scan");  // draw string.
     InkPageSprite.pushSprite();  // push the sprite.
     M5.Speaker.tone(2700, 200);
@@ -142,6 +169,7 @@ void loop() {
   if (M5.BtnUP.wasPressed() || M5.BtnDOWN.wasPressed() || M5.BtnMID.wasPressed())
       Scan();
   if (M5.BtnPWR.wasPressed()) {  // Right button press
+      M5.M5Ink.clear();  // clear the screen.
       M5.shutdown();  // Turn off the power.
   }
   M5.update();  // Refresh device buttons
