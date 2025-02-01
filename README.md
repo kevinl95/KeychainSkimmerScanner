@@ -20,7 +20,7 @@ One of these ESP32 development kits is the [M5Stack Core Ink development kit](ht
 
 You will need the [Arduino IDE](https://www.arduino.cc/en/software).
 
-Before opening main.io from this repository, you will need to add some board management URLs so that we can download dependencies for this project. To do this:
+Before opening `KeychainSkimmerScanner.ino` from this repository, you will need to add some board management URLs so that we can download dependencies for this project. To do this:
 
 Step 1: Open the Arduino IDE
 
