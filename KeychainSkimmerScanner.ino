@@ -23,6 +23,9 @@ BluetoothSerial SerialBT;
 
 #define BT_DISCOVER_TIME 10000
 
+int shutdownTimerDuration = 30000;
+unsigned long shutdownTimerStart;
+
 void btAdvertisedDeviceFound(BTAdvertisedDevice *pDevice) {
   Serial.printf("Found a device asynchronously: %s\n", pDevice->toString().c_str());
 }
@@ -75,11 +78,12 @@ float getBatVoltage() {
     return BatVol;
 }
 
-void Scan() {
+void Scan() {  
     InkPageSprite.clear();                  // clear the sprite.
     InkPageSprite.drawString(10, 50, "Scanning, please wait...");  // draw the string.
     InkPageSprite.pushSprite();             // push the sprite.
     Serial.println("Starting synchronous discovery... ");
+
     int count = 0;
     int skimmerCount = 0;
     int hc05 = 0;
@@ -126,7 +130,7 @@ void Scan() {
     if (skimmerCount > 0) {
       InkPageSprite.drawString(0, 150, "Possible skimmers present!");  // draw the danger string.
     }
-    InkPageSprite.pushSprite();             // push the sprite.
+    InkPageSprite.pushSprite();    // push the sprite.
     if (skimmerCount > 0) {
       M5.Speaker.tone(1000, 200);  // Emit a tone that danger is present
       delay(100);
@@ -137,7 +141,7 @@ void Scan() {
 }
 
 void Reset() {
-  M5.M5Ink.clear();  // clear the screen.
+  M5.M5Ink.clear();       // clear the screen.
   InkPageSprite.clear();  // clear the sprite.
   sprintf(batteryStrBuff, "Battery:%.2fV", getBatVoltage());
   InkPageSprite.drawString(10, 20, batteryStrBuff,&AsciiFont8x16);
@@ -151,7 +155,7 @@ void setup() {
     if (!M5.M5Ink.isInit()) {
         while (1) delay(100);
     }
-    M5.M5Ink.clear();  // clear the screen.
+    M5.M5Ink.clear();  // Clear the screen.
     delay(1000);
     if (InkPageSprite.creatSprite(0, 0, 200, 200, true) != 0) {
     }
@@ -159,18 +163,39 @@ void setup() {
     InkPageSprite.drawString(10, 20, batteryStrBuff,&AsciiFont8x16);
     InkPageSprite.drawString(35, 50, "Ready to scan");  // draw string.
     InkPageSprite.pushSprite();  // push the sprite.
-    M5.Speaker.tone(2700, 200);
-    delay(200);
-    M5.Speaker.mute();
+    playTone();    
     SerialBT.begin("ESP32");  // Bluetooth device name
+    shutdownTimerStart = millis();  // Start the shutdown timer
 }
 
 void loop() {
-  if (M5.BtnUP.wasPressed() || M5.BtnDOWN.wasPressed() || M5.BtnMID.wasPressed())
-      Scan();
-  if (M5.BtnPWR.wasPressed()) {  // Right button press
-      M5.M5Ink.clear();  // clear the screen.
-      M5.shutdown();  // Turn off the power.
-  }
   M5.update();  // Refresh device buttons
+  if (M5.BtnUP.wasPressed() || M5.BtnDOWN.wasPressed() || M5.BtnMID.wasPressed()){
+    Scan();
+    shutdownTimerStart = millis();  // Restart the shutdown timer
+  }
+  if (M5.BtnPWR.wasPressed()) {  // Right button press
+    powerDown();
+  }
+
+  // check to see if enough time's passed since the timer started
+  if ((millis() - shutdownTimerStart) > shutdownTimerDuration) {
+    playTone();
+    powerDown();
+  }
+}
+
+void playTone(){
+  M5.Speaker.tone(2700, 200);
+  delay(200);
+  M5.Speaker.mute();
+}
+
+void powerDown() {
+  M5.M5Ink.clear();  // clear the screen.
+  InkPageSprite.clear();  // clear the sprite.
+  InkPageSprite.drawString(10, 20, "Skimmer Scanner");
+  InkPageSprite.drawString(10, 170, "Press power button ->");
+  InkPageSprite.pushSprite();  // push the sprite.
+  M5.shutdown();     // turn off the power
 }
